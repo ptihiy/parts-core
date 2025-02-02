@@ -1,0 +1,1 @@
+@section('content')how did that happen@endsection
