@@ -42,10 +42,12 @@ class RouteCollectionTest extends TestCase
     {
         $routeCollection = new RouteCollection();
         $routeCollection->addRoute('GET', '/', ['/users', 'UserController@index']);
-        $routeCollection->addRoute('POST', '/show', ['/users', 'UserController@show']);  
+        $routeCollection->addRoute('POST', '/show', ['/users', 'UserController@show']);
+        $routeCollection->addRoute('POST', '/items/{\d+}', ['/users', 'UserController@showItem']);
 
-        $this->assertEquals(2, count($routeCollection->getRoutes()));
+        $this->assertEquals(3, count($routeCollection->getRoutes()));
         $this->assertEquals(1, count($routeCollection->filter(['GET'])));
         $this->assertEquals(1, count($routeCollection->filter([], '/show')));
+        $this->assertEquals(1, count($routeCollection->filter([], '/items/1')));
     }
 }

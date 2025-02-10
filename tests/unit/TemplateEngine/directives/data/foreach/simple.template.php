@@ -1,0 +1,1 @@
+@foreach(users as user)hello world@endforeach

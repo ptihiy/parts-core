@@ -32,7 +32,12 @@ class RouteCollection
         }
 
         return array_filter($this->routes, function ($route) use ($methods, $path) {
-            return in_array($route['method'], $methods) && ($path === null || $route['path'] === $path);
+            return in_array($route['method'], $methods) && ($path === null || preg_match($this->toRegex($route['path']), $path));
         });
+    }
+
+    protected function toRegex(string $path): string
+    {
+        return '#' . str_replace(['{', '}'], '', $path) . '$#i';
     }
 }

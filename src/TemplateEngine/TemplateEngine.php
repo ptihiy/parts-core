@@ -2,20 +2,25 @@
 
 namespace Parts\Core\TemplateEngine;
 
+use Parts\Core\TemplateEngine\Directives\BracketDirective;
 use Parts\Core\Utils\Reflection;
 use Parts\Core\TemplateEngine\Directives\ExtendsDirective;
+use Parts\Core\TemplateEngine\Directives\ForeachDirective;
+use Parts\Core\TemplateEngine\Directives\IfDirective;
 use Parts\Core\TemplateEngine\Directives\IncludeDirective;
 use Parts\Core\TemplateEngine\Traits\RequiresTemplateLoaderTrait;
 
 class TemplateEngine implements TemplateEngineInterface
 {
-    const EXTENDS_PATTERN = '/@extends\(\'(.+?)\'\)/i';
-    const SECTION_PATTERN = '/@section\(\'(?<name>.+?)\'\)(?<contents>.+?)?@endsection/i';
-
     protected array $preprocessorIds = [
         ExtendsDirective::class,
-        IncludeDirective::class
+        IncludeDirective::class,
+        IfDirective::class,
+        ForeachDirective::class,
+        BracketDirective::class
     ];
+
+    protected array $globalVars = [];
 
     public function preprocess(string $template): string
     {
@@ -34,23 +39,27 @@ class TemplateEngine implements TemplateEngineInterface
         private TemplateLoaderInterface $loader
     ) {}
 
+    public function addGlobalVar(string $name, $value): void
+    {
+        $this->globalVars[$name] = $value;
+    }
+
     public function renderInline(string $template, array $data = []): string
     {
         $template = $this->preprocess($template);
 
-        $template = $this->replaceBrackets($template, $data);
+        $uniqueFilename = tempnam(sys_get_temp_dir(), 'tmp_');
+        file_put_contents($uniqueFilename, $template);
 
-        return $template;
-    }
+        extract(array_merge($this->globalVars, $data));
 
-    protected function replaceBrackets($template, array $data)
-    {
-        $pattern = '/\{\{ (.+?) \}\}/i';
-        $callback = function ($matches) use ($data) {
-            return $data[$matches[1]] ?? '';
-        };
+        ob_start();
+        
+        require $uniqueFilename;
 
-        return preg_replace_callback($pattern, $callback, $template);
+        $output = ob_get_clean();
+
+        return $output;
     }
 
     public function render(string $template, array $data = []): string
